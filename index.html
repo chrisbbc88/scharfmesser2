@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scharf Messer — Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ef;
+  --bg2: #ece9e3;
+  --surface: #ffffff;
+  --surface2: #faf9f7;
+  --border: #dedad2;
+  --border2: #ccc6bd;
+  --accent: #2b2218;
+  --accent-light: #f0ece5;
+  --accent-mid: #c8c0b0;
+  --text: #18160f;
+  --text-secondary: #625d53;
+  --text-tertiary: #a09a90;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --yellow: #ca8a04;
+  --yellow-bg: #fefce8;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 4px 12px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.06);
+  --radius: 10px;
+  --radius-lg: 14px;
+  --sans: 'Plus Jakarta Sans', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --display: 'Fraunces', serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; line-height: 1.6; font-size: 14px; -webkit-font-smoothing: antialiased; }
+
+.layout { display: flex; min-height: 100vh; }
+
+aside {
+  width: 248px; background: #faf9f6; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
+}
+.logo-wrap { padding: 20px 20px 18px; border-bottom: 1px solid var(--border); }
+.logo-icon { display: none; }
+.logo-name { display: none; }
+.logo-tagline { display: none; }
+
+nav { padding: 12px 10px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 500; color: var(--text-secondary); cursor: pointer; letter-spacing: 0.1px;
+  transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { background: var(--accent-light); color: var(--accent); }
+.nav-icon { font-size: 15px; width: 20px; text-align: center; }
+.nav-divider { height: 1px; background: var(--border); margin: 8px 10px 10px; }
+.nav-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: var(--text-tertiary); padding: 4px 12px 6px; }
+.sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); font-size: 10.5px; color: var(--text-tertiary); font-family: var(--mono); letter-spacing: 0.3px; }
+
+.main-content { margin-left: 248px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+.topbar {
+  height: 58px; background: #faf9f6; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 32px;
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar-title { font-size: 17px; font-weight: 500; font-family: var(--display); letter-spacing: 0px; font-optical-sizing: auto; }
+.topbar-right { display: flex; gap: 8px; align-items: center; }
+.page-content { padding: 32px; flex: 1; }
+
+.page { display: none; animation: pageIn 0.22s ease; }
+.page.active { display: block; }
+@keyframes pageIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 13.5px; font-weight: 600; letter-spacing: 0.1px; }
+.card-body { padding: 18px 20px; }
+
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 18px 20px; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s, transform 0.2s;
+}
+.stat-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.stat-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-bottom: 9px; display: flex; align-items: center; gap: 6px; letter-spacing: 0.2px; }
+.stat-value { font-size: 36px; font-weight: 400; letter-spacing: -0.5px; line-height: 1; margin-bottom: 5px; font-family: var(--display); font-optical-sizing: auto; }
+.stat-sub { font-size: 11px; color: var(--text-tertiary); }
+
+.type-tabs {
+  display: flex; gap: 5px; margin-bottom: 26px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content;
+}
+.type-tab {
+  font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 7px; border: none;
+  background: none; color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+}
+.type-tab:hover { color: var(--text); background: rgba(255,255,255,0.6); }
+.type-tab.active { background: var(--surface); color: var(--accent); font-weight: 600; box-shadow: var(--shadow-sm); }
+
+.form-section { margin-bottom: 22px; }
+.form-section-label {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+  color: var(--text-tertiary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; letter-spacing: 1px;
+}
+.form-section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.span2 { grid-column: span 2; }
+.form-group.span3 { grid-column: span 3; }
+
+label { font-size: 11.5px; font-weight: 500; color: var(--text-secondary); letter-spacing: 0.15px; }
+
+input, select {
+  height: 40px; padding: 0 12px; background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 13px;
+  transition: all 0.15s; outline: none; -webkit-appearance: none;
+}
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(28,58,94,0.1); }
+input[type="number"] { font-family: var(--mono); font-size: 13px; }
+input::placeholder { color: var(--text-tertiary); }
+select { cursor: pointer; }
+select option { background: white; }
+
+.margin-preview {
+  background: linear-gradient(135deg, #edf2f8 0%, #f9f6f2 100%);
+  border: 1.5px solid var(--accent-mid); border-radius: var(--radius-lg);
+  padding: 18px 22px; margin-bottom: 22px;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+}
+.mp-item { padding: 6px 14px; border-right: 1px solid rgba(0,0,0,0.07); }
+.mp-item:first-child { padding-left: 0; }
+.mp-item:last-child { border-right: none; }
+.mp-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 6px; }
+.mp-value { font-family: var(--mono); font-size: 15px; font-weight: 400; color: var(--text); letter-spacing: -0.5px; }
+.mp-value.pos { color: var(--green); }
+.mp-value.neg { color: var(--red); }
+.mp-value.blue { color: var(--accent); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px;
+  border-radius: 8px; font-size: 13.5px; font-weight: 500; font-family: var(--sans);
+  cursor: pointer; transition: all 0.15s; border: none; letter-spacing: 0.1px;
+}
+.btn-primary { background: var(--accent); color: white; box-shadow: 0 1px 3px rgba(28,58,94,0.25); }
+.btn-primary:hover { background: #142d49; box-shadow: 0 3px 8px rgba(28,58,94,0.3); transform: translateY(-1px); }
+.btn-secondary { background: var(--surface); color: var(--text-secondary); border: 1.5px solid var(--border); }
+.btn-secondary:hover { background: var(--bg); color: var(--text); }
+.btn-ghost { background: none; color: var(--text-secondary); border: 1.5px solid transparent; padding: 6px 10px; font-size: 12px; }
+.btn-ghost:hover { background: var(--bg); border-color: var(--border); color: var(--text); }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 1.5px solid var(--red-border); padding: 6px 10px; font-size: 12px; border-radius: 6px; font-family: var(--sans); font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-danger:hover { background: #fee2e2; }
+.btn-row { display: flex; gap: 10px; align-items: center; }
+
+.table-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; justify-content: space-between; }
+.search-wrap { position: relative; max-width: 300px; flex: 1; }
+.search-wrap input { padding-left: 36px; width: 100%; }
+.search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); font-size: 15px; pointer-events: none; }
+
+.table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--bg2); border-bottom: 1px solid var(--border); }
+th { padding: 10px 16px; font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-secondary); text-align: left; cursor: pointer; user-select: none; white-space: nowrap; transition: color 0.15s; }
+th:hover { color: var(--accent); }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--bg); }
+td { padding: 12px 16px; font-size: 13px; }
+td.mono { font-family: var(--mono); font-size: 12.5px; }
+
+.badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.2px; }
+.badge-resell { background: #edf2f8; color: #1c3a5e; }
+.badge-eigen { background: #fef3c7; color: #92400e; }
+.badge-zubehoer { background: #f5f3ff; color: #5b21b6; }
+
+.mpill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; font-weight: 500; }
+.mpill-track { width: 46px; height: 5px; background: var(--border2); border-radius: 99px; overflow: hidden; }
+.mpill-bar { height: 100%; border-radius: 99px; background: var(--green); }
+.mpill-bar.mid { background: var(--yellow); }
+.mpill-bar.low { background: var(--red); }
+
+.empty-state { text-align: center; padding: 56px 40px; color: var(--text-tertiary); }
+.empty-icon { font-size: 34px; margin-bottom: 12px; opacity: 0.5; }
+.empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+.empty-sub { font-size: 13px; }
+
+.chart-group { display: flex; flex-direction: column; gap: 9px; }
+.chart-row { display: flex; align-items: center; gap: 12px; }
+.chart-name { width: 150px; font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+.chart-bg { flex: 1; height: 22px; background: var(--bg2); border-radius: 5px; overflow: hidden; border: 1px solid var(--border); }
+.chart-fill { height: 100%; border-radius: 5px; display: flex; align-items: center; padding-left: 8px; min-width: 2px; transition: width 0.5s cubic-bezier(0.16,1,0.3,1); }
+.chart-fill.g { background: linear-gradient(90deg, #16a34a, #22c55e); }
+.chart-fill.y { background: linear-gradient(90deg, #ca8a04, #eab308); }
+.chart-fill.r { background: linear-gradient(90deg, #dc2626, #ef4444); }
+.chart-pct { font-family: var(--mono); font-size: 10.5px; font-weight: 500; color: white; white-space: nowrap; }
+.chart-abs { font-family: var(--mono); font-size: 11px; color: var(--text-secondary); width: 72px; text-align: right; }
+
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
+.page-title { font-size: 28px; font-weight: 500; letter-spacing: -0.3px; font-family: var(--display); font-optical-sizing: auto; }
+.page-sub { font-size: 13px; color: var(--text-secondary); margin-top: 4px; font-weight: 400; }
+
+.toast {
+  position: fixed; bottom: 26px; right: 26px; background: var(--text); color: white;
+  padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lg); z-index: 9999; transform: translateY(10px); opacity: 0;
+  transition: all 0.22s cubic-bezier(0.16,1,0.3,1); pointer-events: none; max-width: 300px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── TAG SYSTEM ── */
+.tag-widget {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; min-height: 42px; display: flex; flex-wrap: wrap; gap: 6px;
+  align-items: center; cursor: text; transition: all 0.15s;
+}
+.tag-widget:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(28,58,94,0.1); }
+.tag-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px 3px 10px;
+  border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--accent-light); letter-spacing: 0.1px;
+  color: var(--accent); white-space: nowrap; animation: chipIn 0.15s ease;
+}
+@keyframes chipIn { from { opacity:0; transform:scale(0.85); } to { opacity:1; transform:scale(1); } }
+.tag-chip-x {
+  cursor: pointer; font-size: 13px; line-height: 1; color: var(--accent); opacity: 0.6;
+  border: none; background: none; padding: 0; font-family: var(--sans); transition: opacity 0.1s;
+}
+.tag-chip-x:hover { opacity: 1; }
+.tag-input {
+  border: none !important; outline: none !important; background: none !important;
+  box-shadow: none !important; padding: 0 !important; height: auto !important;
+  font-size: 13px; color: var(--text); min-width: 120px; flex: 1;
+}
+.tag-suggestions {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 8px; box-shadow: var(--shadow);
+  z-index: 200; max-height: 240px; overflow-y: auto;
+}
+.tag-suggestion-item {
+  padding: 9px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center;
+  gap: 8px; transition: background 0.1s; color: var(--text);
+}
+.tag-suggestion-item:hover, .tag-suggestion-item.focused { background: var(--accent-light); color: var(--accent); }
+.tag-suggestion-new { color: var(--text-secondary); font-style: italic; }
+.tag-suggestion-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tag-wrap { position: relative; }
+
+/* Tag chips in table / filters */
+.tag-pill {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  border-radius: 20px; font-size: 10.5px; font-weight: 600;
+}
+
+/* Filter bar */
+.filter-bar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 14px 18px; margin-bottom: 14px; box-shadow: var(--shadow-sm);
+}
+.filter-bar-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter-section-title { font-size: 10.5px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; }
+.filter-tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.filter-tag-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px;
+  border-radius: 20px; font-size: 12px; font-weight: 500; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+}
+.filter-tag-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.filter-tag-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-light); font-weight: 600; }
+.filter-tag-btn .ftag-x { font-size: 12px; opacity: 0.7; }
+
+.sort-select {
+  height: 36px; padding: 0 10px; background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 12.5px; color: var(--text-secondary); font-family: var(--sans);
+  cursor: pointer; outline: none; transition: all 0.15s; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a8a49d'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px;
+}
+.sort-select:focus { border-color: var(--accent); color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<aside>
+  <div class="logo-wrap">
+    <a href="#" onclick="showPage('dashboard',document.querySelector('.nav-item'));return false;" style="display:block;text-decoration:none;">
+      <!-- Logo: scharf-messer.com official image + SVG fallback -->
+      <img 
+        src="https://scharf-messer.com/cdn/shop/files/scharf-messer-logo.png" 
+        alt="Scharf Messer" 
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block';"
+        style="width:160px;display:block;margin-bottom:4px;"
+      >
+      <!-- SVG wordmark fallback / shown when img fails -->
+      <div style="display:block;">
+        <svg viewBox="0 0 200 52" xmlns="http://www.w3.org/2000/svg" style="width:182px;display:block;">
+          <defs>
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap');
+            </style>
+          </defs>
+          <!-- SCHARF — bold display -->
+          <text 
+            x="2" y="28" 
+            font-family="'Fraunces', 'Georgia', serif" 
+            font-weight="700" 
+            font-size="24" 
+            letter-spacing="-0.5"
+            fill="#18160f"
+          >Scharf</text>
+          <!-- MESSER — light weight below -->
+          <text 
+            x="2" y="48" 
+            font-family="'Fraunces', 'Georgia', serif" 
+            font-weight="300" 
+            font-size="17" 
+            letter-spacing="5"
+            fill="#18160f"
+            opacity="0.75"
+          >MESSER</text>
+          <!-- Decorative thin line between the two words -->
+          <line x1="2" y1="32" x2="198" y2="32" stroke="#18160f" stroke-width="0.5" opacity="0.2"/>
+        </svg>
+      </div>
+      <div style="font-size:9px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;color:var(--text-tertiary);margin-top:6px;font-family:var(--sans);">Produkt &amp; Margen System</div>
+    </a>
+  </div>
+  <nav>
+    <div class="nav-label">Übersicht</div>
+    <button class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span>Dashboard</span></button>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Produkte</div>
+    <button class="nav-item" onclick="showPage('new-product',this)"><span class="nav-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></span><span>Produkt anlegen</span></button>
+    <button class="nav-item" onclick="showPage('products',this)"><span class="nav-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span>Alle Produkte</span></button>
+    <div class="nav-divider"></div>
+    <div class="nav-label">Auswertung</div>
+    <button class="nav-item" onclick="showPage('analyse',this)"><span class="nav-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>Analyse</span></button>
+  </nav>
+  <div class="sidebar-footer">scharf-messer.com</div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-right">
+      <button class="btn btn-primary" onclick="showPage('new-product',document.querySelector('.nav-item:nth-child(4)'))" style="padding:7px 14px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Produkt anlegen</button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Willkommen</div>
+          <div class="page-sub">Dein Produkt- & Margen-Cockpit</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg> Produkte gesamt</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub">im System angelegt</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Ø Brutto-Marge</div>
+          <div class="stat-value" id="stat-avg" style="color:var(--accent)">—</div>
+          <div class="stat-sub">über alle Produkte</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg> Beste Marge</div>
+          <div class="stat-value" id="stat-best" style="color:var(--green)">—</div>
+          <div class="stat-sub" id="stat-best-name">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Schwächste Marge</div>
+          <div class="stat-value" id="stat-worst" style="color:var(--red)">—</div>
+          <div class="stat-sub" id="stat-worst-name">—</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Zuletzt hinzugefügt</div></div>
+          <div id="dash-recent"><div class="empty-state"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">[ ]</div><div class="empty-title">Noch keine Produkte</div><div class="empty-sub">Lege dein erstes Produkt an.</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg> Top Marge</div></div>
+          <div id="dash-top" class="card-body"><div class="empty-state" style="padding:36px 0;"><div class="empty-icon" style="font-size:28px;">↗</div><div class="empty-sub">Noch keine Daten</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEU PRODUKT -->
+    <div id="page-new-product" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Produkt anlegen</div>
+          <div class="page-sub">Fülle die Felder aus – die Marge wird live berechnet.</div>
+        </div>
+      </div>
+
+      <div class="type-tabs">
+        <button class="type-tab active" onclick="setType('resell',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Zugekauft / Resell</button>
+        <button class="type-tab" onclick="setType('eigen',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M15 12l-8.5 8.5a2.12 2.12 0 0 1-3-3L12 9"/><path d="M17.64 15L22 10.64"/><path d="M20.91 11.7l-1.25-1.25c-.6-.6-.93-1.4-.93-2.25v-.86L16.01 4.6a5.56 5.56 0 0 0-3.94-1.64H9l.92.82A6.18 6.18 0 0 1 12 8.4v1.56l2 2h2.47l2.26 1.91"/></svg> Eigenherstellung</button>
+        <button class="type-tab" onclick="setType('zubehoer',this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg> Zubehör / Sonstiges</button>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Produktinformationen</div>
+        <div class="form-grid">
+          <div class="form-group span2"><label>Produktname *</label><input type="text" id="f-name" placeholder="z.B. Japanisches Santoku 18cm" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Kategorie</label>
+            <select id="f-category"><option value="">— wählen —</option><option>Messer</option><option>Schneidebretter</option><option>Schleifsteine</option><option>Zubehör</option><option>Bundle / Set</option><option>Sonstiges</option></select>
+          </div>
+          <div class="form-group"><label>SKU / Artikelnummer</label><input type="text" id="f-sku" placeholder="z.B. KL-001"></div>
+          <div class="form-group"><label>Herkunftsland</label><input type="text" id="f-origin" placeholder="z.B. Japan"></div>
+          <div class="form-group"><label>Beschreibung (intern)</label><input type="text" id="f-desc" placeholder="Interne Notiz"></div>
+          <div class="form-group span3">
+            <label>Tags <span style="font-weight:400;color:var(--text-tertiary);">— Mehrfachauswahl möglich · Eigenen Tag eingeben &amp; Enter drücken</span></label>
+            <div class="tag-wrap">
+              <div class="tag-widget" id="tag-widget" onclick="document.getElementById('tag-input').focus()">
+                <input type="text" id="tag-input" class="tag-input" placeholder="Tag auswählen oder eingeben …" autocomplete="off"
+                  oninput="onTagInput(this.value)"
+                  onkeydown="onTagKeydown(event)"
+                  onfocus="showTagSuggestions(this.value)"
+                  onblur="setTimeout(hideTagSuggestions,180)">
+              </div>
+              <div class="tag-suggestions" id="tag-suggestions" style="display:none;"></div>
+            </div>
+            <div style="margin-top:9px;">
+              <div style="font-size:10.5px;color:var(--text-tertiary);margin-bottom:6px;font-weight:500;">Schnellauswahl:</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px;" id="preset-tags"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BLADE SPECS -->
+      <div class="form-section" id="section-specs">
+        <div class="form-section-label">Produktspezifikationen</div>
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label>Klingenlänge (cm)</label>
+            <input type="number" id="f-blade-length" placeholder="z.B. 18" step="0.5">
+          </div>
+          <div class="form-group">
+            <label>Klingenbreite (mm)</label>
+            <input type="number" id="f-blade-width" placeholder="z.B. 45" step="0.5">
+          </div>
+          <div class="form-group">
+            <label>Klingenstärke (mm)</label>
+            <input type="number" id="f-blade-thickness" placeholder="z.B. 2.0" step="0.1">
+          </div>
+
+          <div class="form-group">
+            <label>Klingenmaterial</label>
+            <select id="f-blade-material">
+              <option value="">— wählen —</option>
+              <optgroup label="Edelstahl">
+                <option>X50CrMoV15 (Deutscher Edelstahl)</option>
+                <option>1.4116 (X50CrMoV15)</option>
+                <option>AUS-8 (Japanischer Edelstahl)</option>
+                <option>VG-10 (Japanischer Hochleistungsstahl)</option>
+                <option>VG-MAX</option>
+                <option>SG2 / R2 (Pulverstahl)</option>
+                <option>HAP40 (Pulverstahl)</option>
+                <option>ZDP-189 (Pulverstahl)</option>
+              </optgroup>
+              <optgroup label="Kohlenstoffstahl">
+                <option>1075 Kohlenstoffstahl</option>
+                <option>1095 Kohlenstoffstahl</option>
+                <option>SK5 Kohlenstoffstahl</option>
+                <option>Blauer Stahl (Aogami)</option>
+                <option>Weißer Stahl (Shirogami)</option>
+                <option>Gelber Stahl (Kigami)</option>
+              </optgroup>
+              <optgroup label="Damaszener">
+                <option>Damaszener (67 Lagen)</option>
+                <option>Damaszener (33 Lagen)</option>
+                <option>Damaszener (101 Lagen)</option>
+                <option>Damaszener (individuell)</option>
+              </optgroup>
+              <optgroup label="Sonstige">
+                <option>Keramik</option>
+                <option>Titan</option>
+                <option>Sonstiges</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Härtegrad (HRC)</label>
+            <input type="number" id="f-hardness" placeholder="z.B. 60" step="0.5" min="40" max="70">
+          </div>
+          <div class="form-group">
+            <label>Klingenschliff</label>
+            <select id="f-grind">
+              <option value="">— wählen —</option>
+              <option>Flachschliff (Flat Grind)</option>
+              <option>Hohlschliff (Hollow Grind)</option>
+              <option>Konvexschliff (Convex Grind)</option>
+              <option>Balligschliff</option>
+              <option>Asymmetrischer Schliff</option>
+              <option>Einseitig (Chisel Grind)</option>
+              <option>Skandinavischer Schliff (Scandi)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Griffmaterial</label>
+            <select id="f-handle-material">
+              <option value="">— wählen —</option>
+              <optgroup label="Holz">
+                <option>Pakkaholz</option>
+                <option>Walnuss</option>
+                <option>Olive</option>
+                <option>Eiche</option>
+                <option>Kirschholz</option>
+                <option>Magnolienholz</option>
+                <option>Ebenholz</option>
+                <option>Stabilisiertes Holz</option>
+              </optgroup>
+              <optgroup label="Kunststoff / Verbund">
+                <option>Micarta</option>
+                <option>G10 (Glasfaser)</option>
+                <option>Kunststoff (ABS)</option>
+                <option>Glasfaserverstärkter Kunststoff</option>
+              </optgroup>
+              <optgroup label="Sonstige">
+                <option>Edelstahl (volltanging)</option>
+                <option>Büffelhorn</option>
+                <option>Knochen</option>
+                <option>Sonstiges</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Griffform</label>
+            <select id="f-handle-shape">
+              <option value="">— wählen —</option>
+              <option>Wa-Griff (Japanisch, oktagonal)</option>
+              <option>Wa-Griff (Japanisch, oval)</option>
+              <option>Wa-Griff (Japanisch, rund)</option>
+              <option>Westlicher Griff (Full Tang)</option>
+              <option>Hidden Tang</option>
+              <option>Rattantail Tang</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Gesamtgewicht (g)</label>
+            <input type="number" id="f-weight" placeholder="z.B. 185" step="1">
+          </div>
+
+          <div class="form-group">
+            <label>Klingenform / Messertyp</label>
+            <select id="f-blade-type">
+              <option value="">— wählen —</option>
+              <option>Gyuto (Japanisches Kochmesser)</option>
+              <option>Santoku (Mehrzweckmesser)</option>
+              <option>Nakiri (Gemüsemesser)</option>
+              <option>Yanagiba (Fischmesser)</option>
+              <option>Deba (Fischmesser schwer)</option>
+              <option>Sujihiki (Schneidemesser)</option>
+              <option>Kiritsuke (Vielzweckmesser)</option>
+              <option>Usuba (Gemüsemesser)</option>
+              <option>Petty (Schälmesser)</option>
+              <option>Chef's Knife (Westlich)</option>
+              <option>Brotmesser</option>
+              <option>Filetiermesser</option>
+              <option>Ausbeinmesser</option>
+              <option>Schinkenmesser</option>
+              <option>Fleischmesser</option>
+              <option>Taschenmesser / Klappmesser</option>
+              <option>Outdoormesser / Feststeher</option>
+              <option>Schälmesser (Tourné)</option>
+              <option>Sonstiges</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Schnitthaltigkeit</label>
+            <select id="f-edge-retention">
+              <option value="">— wählen —</option>
+              <option>Sehr hoch (Pulverstahl / HRC 65+)</option>
+              <option>Hoch (HRC 60–64)</option>
+              <option>Mittel (HRC 56–59)</option>
+              <option>Standard (HRC &lt;56)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Rostverhalten</label>
+            <select id="f-rust">
+              <option value="">— wählen —</option>
+              <option>Rostfrei</option>
+              <option>Bedingt rostfrei</option>
+              <option>Reaktiv (Patina erforderlich)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Zielgruppe</label>
+            <select id="f-target">
+              <option value="">— wählen —</option>
+              <option>Hobby-Köche (Einsteiger)</option>
+              <option>Fortgeschrittene Hobby-Köche</option>
+              <option>Profi-Köche</option>
+              <option>Outdoor / Camping</option>
+              <option>Sammler</option>
+              <option>Gastronomiebetriebe</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Lieferumfang</label>
+            <select id="f-delivery">
+              <option value="">— wählen —</option>
+              <option>Nur Messer</option>
+              <option>Messer + Scheide</option>
+              <option>Messer + Schleifstein</option>
+              <option>Messer + Box / Etui</option>
+              <option>Komplettset</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Spülmaschinenfest</label>
+            <select id="f-dishwasher">
+              <option value="">— wählen —</option>
+              <option>Nein (Handwäsche empfohlen)</option>
+              <option>Ja</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-section" id="section-resell">
+        <div class="form-section-label">Einkauf & Logistik</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Einkaufspreis (netto) €</label><input type="number" id="f-purchase" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Zollkosten € (pro Einheit)</label><input type="number" id="f-customs" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Logistik / Transport € (pro Einheit)</label><input type="number" id="f-logistics" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+        </div>
+      </div>
+
+      <div class="form-section" id="section-eigen" style="display:none;">
+        <div class="form-section-label">Herstellungskosten</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Materialkosten € (pro Einheit)</label><input type="number" id="f-material" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Fertigungskosten € / Stunde</label><input type="number" id="f-production" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Herstellungszeit (Stunden)</label><input type="number" id="f-hours" placeholder="0,0" step="0.1" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Mitarbeiterkosten € (pro Einheit)</label><input type="number" id="f-labor" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Import / Zoll € (Materialien)</label><input type="number" id="f-import" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Transport Materialien €</label><input type="number" id="f-transport" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-label">Verkaufskosten & Preis</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Verpackungskosten € (pro Einheit)</label><input type="number" id="f-packaging" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Versandkosten € (Anteil)</label><input type="number" id="f-shipping" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Shop-Gebühr % (z.B. 2%)</label><input type="number" id="f-shopfee" placeholder="2" step="0.1" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Marketing-Anteil %</label><input type="number" id="f-marketing" placeholder="5" step="0.1" oninput="calcMargin()"></div>
+          <div class="form-group"><label>Verkaufspreis (brutto inkl. MwSt.) € *</label><input type="number" id="f-price" placeholder="0,00" step="0.01" oninput="calcMargin()"></div>
+          <div class="form-group"><label>MwSt.-Satz</label>
+            <select id="f-vat" onchange="calcMargin()"><option value="19">19 % Standard</option><option value="7">7 % Ermäßigt</option><option value="0">0 % Steuerbefreit</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:10.5px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-tertiary);margin-bottom:8px;">Live-Margenvorschau</div>
+      <div class="margin-preview">
+        <div class="mp-item"><div class="mp-label">Gesamtkosten</div><div class="mp-value" id="mp-costs">—</div></div>
+        <div class="mp-item"><div class="mp-label">Netto-VK</div><div class="mp-value blue" id="mp-netto">—</div></div>
+        <div class="mp-item"><div class="mp-label">MwSt.-Anteil</div><div class="mp-value" id="mp-vat">—</div></div>
+        <div class="mp-item"><div class="mp-label">Marge €</div><div class="mp-value" id="mp-mabs">—</div></div>
+        <div class="mp-item"><div class="mp-label">Marge %</div><div class="mp-value" id="mp-mpct">—</div></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveProduct()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Produkt speichern</button>
+        <button class="btn btn-secondary" onclick="resetForm()">Zurücksetzen</button>
+      </div>
+    </div>
+
+    <!-- PRODUKTE -->
+    <div id="page-products" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Alle Produkte</div>
+          <div class="page-sub" id="prod-sub">0 Produkte im System</div>
+        </div>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="filter-bar-top">
+          <div class="search-wrap" style="max-width:280px;">
+            <span class="search-icon" style="display:flex;align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <input type="text" placeholder="Name oder SKU …" id="filter-search" oninput="applyFilters()">
+          </div>
+          <select class="sort-select" id="sort-select" onchange="onSortChange(this.value)">
+            <option value="created_desc">Neueste zuerst</option>
+            <option value="created_asc">Älteste zuerst</option>
+            <option value="name_asc">Name A–Z</option>
+            <option value="name_desc">Name Z–A</option>
+            <option value="margin_pct_desc">Marge % ↓</option>
+            <option value="margin_pct_asc">Marge % ↑</option>
+            <option value="margin_abs_desc">Marge € ↓</option>
+            <option value="price_gross_desc">Preis ↓</option>
+            <option value="price_gross_asc">Preis ↑</option>
+            <option value="total_costs_desc">Kosten ↓</option>
+            <option value="category_asc">Kategorie A–Z</option>
+          </select>
+          <select class="sort-select" id="filter-type" onchange="applyFilters()">
+            <option value="">Alle Typen</option>
+            <option value="resell">Resell</option>
+            <option value="eigen">Eigenherstellung</option>
+            <option value="zubehoer">Zubehör</option>
+          </select>
+          <select class="sort-select" id="filter-category" onchange="applyFilters()">
+            <option value="">Alle Kategorien</option>
+            <option>Messer</option><option>Schneidebretter</option><option>Schleifsteine</option>
+            <option>Zubehör</option><option>Bundle / Set</option><option>Sonstiges</option>
+          </select>
+          <button class="btn btn-ghost" onclick="clearFilters()" style="font-size:12px;">× Filter zurücksetzen</button>
+        </div>
+        <div id="tag-filter-row" style="margin-top:10px;display:none;">
+          <div class="filter-section-title">Nach Tag filtern:</div>
+          <div class="filter-tag-row" id="tag-filter-btns"></div>
+        </div>
+      </div>
+
+      <div id="products-container">
+        <div class="table-wrap"><div class="empty-state"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">[ ]</div><div class="empty-title">Keine Produkte</div></div></div>
+      </div>
+    </div>
+
+    <!-- ANALYSE -->
+    <div id="page-analyse" class="page">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Analyse</div>
+          <div class="page-sub">Margenübersicht und Produktranking</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg> Produkte</div><div class="stat-value" id="an-total">0</div></div>
+        <div class="stat-card"><div class="stat-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> Ø Marge</div><div class="stat-value" id="an-avg" style="color:var(--accent)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Marge > 40%</div><div class="stat-value" id="an-high" style="color:var(--green)">0</div></div>
+        <div class="stat-card"><div class="stat-label">Marge < 20%</div><div class="stat-value" id="an-low" style="color:var(--red)">0</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg> Top 5 — Beste Marge</div></div>
+          <div id="top5" class="card-body"><div class="empty-state" style="padding:30px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Bottom 5 — Schwächste Marge</div></div>
+          <div id="bot5" class="card-body"><div class="empty-state" style="padding:30px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Alle Produkte nach Marge</div></div>
+        <div id="all-chart" class="card-body"><div class="empty-state" style="padding:30px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+      </div>
+
+      <!-- Specs Analysis -->
+      <div style="margin-top:24px;">
+        <div class="page-title" style="font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M9 3h6M10 3v6l-4 8a1 1 0 0 0 .9 1.5h10.2a1 1 0 0 0 .9-1.5l-4-8V3"/></svg> Spezifikations-Analyse</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+          <div class="card">
+            <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> Klingenmaterial</div></div>
+            <div id="an-material" class="card-body"><div class="empty-state" style="padding:24px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M3 17l4-4 4 4 4-4 4 4"/><rect x="2" y="4" width="20" height="8" rx="1"/></svg> Klingenlänge</div></div>
+            <div id="an-length" class="card-body"><div class="empty-state" style="padding:24px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M3 21l9-9m0 0l6.5-6.5a3.5 3.5 0 0 0-5-5L7 7m5 5l-4 4"/></svg> Messertyp</div></div>
+            <div id="an-type" class="card-body"><div class="empty-state" style="padding:24px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><path d="M3 7c0-2.2 1.8-4 4-4h10c2.2 0 4 1.8 4 4v10c0 2.2-1.8 4-4 4H7c-2.2 0-4-1.8-4-4V7z"/><path d="M7 7h10M7 12h10M7 17h6"/></svg> Griffmaterial</div></div>
+            <div id="an-handle" class="card-body"><div class="empty-state" style="padding:24px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Zielgruppe</div></div>
+            <div id="an-target" class="card-body"><div class="empty-state" style="padding:24px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:0.6;" ><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Marge nach Material</div></div>
+            <div id="an-material-margin" class="card-body"><div class="empty-state" style="padding:24px 0;"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">▥</div><div class="empty-sub">Keine Daten</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+// ── PRESET TAGS ──
+const PRESET_TAGS = [
+  { label: 'Fleischmesser',  color: '#dc2626', bg: '#fef2f2' },
+  { label: 'Fischmesser',    color: 'var(--accent)', bg: '#eff6ff' },
+  { label: 'Gemüsemesser',   color: '#16a34a', bg: '#f0fdf4' },
+  { label: 'Brotmesser',     color: '#ca8a04', bg: '#fefce8' },
+  { label: 'Kochmesser',     color: '#7c3aed', bg: '#f5f3ff' },
+  { label: 'Santoku',        color: '#0891b2', bg: '#ecfeff' },
+  { label: 'Schälmesser',    color: '#db2777', bg: '#fdf2f8' },
+  { label: 'Damaszener',     color: '#92400e', bg: '#fef3c7' },
+  { label: 'Japanisch',      color: '#0f766e', bg: '#f0fdfa' },
+  { label: 'Deutsch',        color: '#3a2e22', bg: '#dbeafe' },
+  { label: 'Outdoor',        color: '#15803d', bg: '#dcfce7' },
+  { label: 'Linkshänder',    color: '#9333ea', bg: '#faf5ff' },
+  { label: 'Anfänger',       color: '#6b7280', bg: '#f9fafb' },
+  { label: 'Profi',          color: '#b45309', bg: '#fffbeb' },
+  { label: 'Schleifstein',   color: '#374151', bg: '#f3f4f6' },
+  { label: 'Set / Bundle',   color: '#0369a1', bg: '#e0f2fe' },
+];
+
+function getTagStyle(label) {
+  const preset = PRESET_TAGS.find(t => t.label === label);
+  if (preset) return { color: preset.color, bg: preset.bg };
+  let hash = 0;
+  for (let i = 0; i < label.length; i++) hash = label.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return { color: `hsl(${hue},55%,32%)`, bg: `hsl(${hue},60%,94%)` };
+}
+
+// ── STATE ──
+let products = JSON.parse(localStorage.getItem('km_v2')||'[]');
+let curType = 'resell';
+let sortKey = 'created', sortDir = -1;
+let activeTags = new Set();
+let filterTags = new Set();
+
+const PAGE_TITLES = {dashboard:'Dashboard','new-product':'Produkt anlegen',products:'Alle Produkte',analyse:'Analyse'};
+
+function showPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(btn) btn.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[page]||page;
+  if(page==='products') { buildTagFilterBar(); renderTable(); }
+  if(page==='dashboard') renderDashboard();
+  if(page==='analyse') renderAnalyse();
+}
+
+function setType(type, btn) {
+  curType = type;
+  document.querySelectorAll('.type-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('section-resell').style.display = (type!=='eigen') ? 'block' : 'none';
+  document.getElementById('section-eigen').style.display = type==='eigen' ? 'block' : 'none';
+  calcMargin();
+}
+
+// ── TAG WIDGET ──
+function renderTagChips() {
+  const widget = document.getElementById('tag-widget');
+  if(!widget) return;
+  const inp = document.getElementById('tag-input');
+  widget.querySelectorAll('.tag-chip').forEach(c=>c.remove());
+  [...activeTags].forEach(tag => {
+    const s = getTagStyle(tag);
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.style.cssText = `background:${s.bg};color:${s.color};`;
+    chip.innerHTML = `${esc(tag)}<button class="tag-chip-x" onmousedown="removeTag('${esc(tag).replace(/'/g,"\\'")}');return false;">×</button>`;
+    widget.insertBefore(chip, inp);
+  });
+  renderPresetButtons();
+}
+
+function addTag(tag) {
+  tag = tag.trim();
+  if (!tag || activeTags.has(tag)) return;
+  activeTags.add(tag);
+  const inp = document.getElementById('tag-input');
+  if(inp) inp.value = '';
+  renderTagChips();
+  hideTagSuggestions();
+}
+
+function removeTag(tag) {
+  activeTags.delete(tag);
+  renderTagChips();
+}
+
+function renderPresetButtons() {
+  const container = document.getElementById('preset-tags');
+  if (!container) return;
+  container.innerHTML = PRESET_TAGS.map(t => {
+    const active = activeTags.has(t.label);
+    return `<button onmousedown="togglePresetTag('${esc(t.label).replace(/'/g,"\\'")}');return false;" style="
+      display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:20px;
+      font-size:11.5px;font-weight:600;border:1.5px solid ${active?t.color:'#e4e0d8'};
+      background:${active?t.bg:'transparent'};color:${active?t.color:'#a8a49d'};
+      cursor:pointer;transition:all 0.15s;font-family:var(--sans);
+    ">${active?'✓ ':''}${esc(t.label)}</button>`;
+  }).join('');
+}
+
+function togglePresetTag(tag) {
+  if (activeTags.has(tag)) activeTags.delete(tag);
+  else activeTags.add(tag);
+  renderTagChips();
+}
+
+function onTagInput(val) { showTagSuggestions(val); }
+
+function onTagKeydown(e) {
+  const val = e.target.value.trim();
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const focused = document.querySelector('.tag-suggestion-item.focused');
+    if (focused) addTag(focused.dataset.tag);
+    else if (val) addTag(val);
+  }
+  if (e.key === 'Backspace' && !val && activeTags.size > 0) {
+    const last = [...activeTags].pop();
+    activeTags.delete(last);
+    renderTagChips();
+  }
+  if (e.key === 'ArrowDown') { moveFocus(1); e.preventDefault(); }
+  if (e.key === 'ArrowUp') { moveFocus(-1); e.preventDefault(); }
+  if (e.key === 'Escape') hideTagSuggestions();
+}
+
+function moveFocus(dir) {
+  const items = document.querySelectorAll('.tag-suggestion-item');
+  const cur = [...items].findIndex(i=>i.classList.contains('focused'));
+  items.forEach(i=>i.classList.remove('focused'));
+  const next = Math.max(0, Math.min(items.length-1, cur+dir));
+  if(items[next]) items[next].classList.add('focused');
+}
+
+function showTagSuggestions(val) {
+  const box = document.getElementById('tag-suggestions');
+  if(!box) return;
+  val = (val||'').toLowerCase();
+  const customTags = [...new Set(products.flatMap(p=>p.tags||[]))];
+  const allTags = [...new Set([...PRESET_TAGS.map(t=>t.label), ...customTags])];
+  const filtered = allTags.filter(t => !activeTags.has(t) && (!val || t.toLowerCase().includes(val)));
+  const showNew = val && !allTags.some(t=>t.toLowerCase()===val) && !activeTags.has(val);
+  if (!filtered.length && !showNew) { box.style.display='none'; return; }
+  let h = '';
+  filtered.slice(0,10).forEach(tag => {
+    const s = getTagStyle(tag);
+    h += `<div class="tag-suggestion-item" data-tag="${esc(tag)}" onmousedown="addTag('${esc(tag).replace(/'/g,"\\'")}');return false;">
+      <span class="tag-suggestion-dot" style="background:${s.color}"></span>${esc(tag)}
+    </div>`;
+  });
+  if (showNew) h += `<div class="tag-suggestion-item tag-suggestion-new" data-tag="${esc(val)}" onmousedown="addTag('${esc(val).replace(/'/g,"\\'")}');return false;">+ „${esc(val)}" als neuen Tag hinzufügen</div>`;
+  box.innerHTML = h;
+  box.style.display = 'block';
+}
+
+function hideTagSuggestions() {
+  const box = document.getElementById('tag-suggestions');
+  if (box) box.style.display = 'none';
+}
+
+// ── MARGIN CALC ──
+function v(id) { return parseFloat(document.getElementById(id)?.value)||0; }
+
+function calcMargin() {
+  const vat = v('f-vat')/100;
+  const gross = v('f-price');
+  const netto = gross/(1+vat);
+  const vatAmt = gross-netto;
+  const shopFee = netto*(v('f-shopfee')/100);
+  const mktFee = netto*(v('f-marketing')/100);
+  let costs = v('f-packaging')+v('f-shipping')+shopFee+mktFee;
+  if(curType==='eigen') costs += v('f-material')+(v('f-production')*v('f-hours'))+v('f-labor')+v('f-import')+v('f-transport');
+  else costs += v('f-purchase')+v('f-customs')+v('f-logistics');
+  const mAbs = netto-costs;
+  const mPct = netto>0 ? (mAbs/netto)*100 : 0;
+  setEl('mp-costs', fmt(costs)+' €');
+  setEl('mp-netto', fmt(netto)+' €');
+  setEl('mp-vat', fmt(vatAmt)+' €');
+  const ae = document.getElementById('mp-mabs'), pe = document.getElementById('mp-mpct');
+  if(ae){ ae.textContent = fmt(mAbs)+' €'; ae.className = 'mp-value '+(mPct>=30?'pos':mPct<0?'neg':''); }
+  if(pe){ pe.textContent = fmtP(mPct); pe.className = 'mp-value '+(mPct>=30?'pos':mPct<0?'neg':''); }
+  return {costs,netto,vatAmt,mAbs,mPct,gross};
+}
+
+// ── SAVE ──
+function saveProduct() {
+  const name = document.getElementById('f-name').value.trim();
+  if(!name){toast('! Bitte Produktname eingeben');return;}
+  if(!v('f-price')){toast('! Bitte Verkaufspreis eingeben');return;}
+  const c = calcMargin();
+  const gv = id => document.getElementById(id)?.value || '';
+  const p = {
+    id:Date.now(), name, sku:gv('f-sku'),
+    category:gv('f-category'), origin:gv('f-origin'),
+    desc:gv('f-desc'), type:curType, vat:v('f-vat'),
+    tags:[...activeTags],
+    // ── Specs ──
+    blade_length: v('f-blade-length')||null,
+    blade_width: v('f-blade-width')||null,
+    blade_thickness: v('f-blade-thickness')||null,
+    blade_material: gv('f-blade-material'),
+    hardness: v('f-hardness')||null,
+    grind: gv('f-grind'),
+    handle_material: gv('f-handle-material'),
+    handle_shape: gv('f-handle-shape'),
+    weight: v('f-weight')||null,
+    blade_type: gv('f-blade-type'),
+    edge_retention: gv('f-edge-retention'),
+    rust: gv('f-rust'),
+    target: gv('f-target'),
+    delivery: gv('f-delivery'),
+    dishwasher: gv('f-dishwasher'),
+    // ── Costs ──
+    price_gross:v('f-price'), price_netto:c.netto, total_costs:c.costs, margin_abs:c.mAbs, margin_pct:c.mPct,
+    purchase:v('f-purchase'),customs:v('f-customs'),logistics:v('f-logistics'),
+    material:v('f-material'),production:v('f-production'),hours:v('f-hours'),
+    labor:v('f-labor'),import_:v('f-import'),transport:v('f-transport'),
+    packaging:v('f-packaging'),shipping:v('f-shipping'),shopfee:v('f-shopfee'),marketing:v('f-marketing'),
+    created:new Date().toISOString()
+  };
+  products.unshift(p); save(); resetForm();
+  toast('✓ Gespeichert: '+name);
+  setTimeout(()=>showPage('products',document.querySelectorAll('.nav-item')[2]),500);
+}
+
+// ── PRODUCT TABLE ──
+function buildTagFilterBar() {
+  const allTags = [...new Set(products.flatMap(p=>p.tags||[]))].sort();
+  const row = document.getElementById('tag-filter-row');
+  const btns = document.getElementById('tag-filter-btns');
+  if(!row||!btns) return;
+  if (!allTags.length) { row.style.display='none'; return; }
+  row.style.display = 'block';
+  btns.innerHTML = allTags.map(tag => {
+    const s = getTagStyle(tag);
+    const active = filterTags.has(tag);
+    return `<button class="filter-tag-btn ${active?'active':''}" onmousedown="toggleFilterTag('${esc(tag).replace(/'/g,"\\'")}');return false;">
+      <span style="width:7px;height:7px;border-radius:50%;background:${s.color};display:inline-block;flex-shrink:0;"></span>
+      ${esc(tag)}${active?` <span class="ftag-x">×</span>`:''}
+    </button>`;
+  }).join('');
+}
+
+function toggleFilterTag(tag) {
+  if(filterTags.has(tag)) filterTags.delete(tag);
+  else filterTags.add(tag);
+  buildTagFilterBar();
+  renderTable();
+}
+
+function clearFilters() {
+  const fs = document.getElementById('filter-search');
+  const ft = document.getElementById('filter-type');
+  const fc = document.getElementById('filter-category');
+  const ss = document.getElementById('sort-select');
+  if(fs) fs.value='';
+  if(ft) ft.value='';
+  if(fc) fc.value='';
+  if(ss) ss.value='created_desc';
+  filterTags.clear();
+  sortKey='created'; sortDir=-1;
+  buildTagFilterBar();
+  renderTable();
+}
+
+function onSortChange(val) {
+  if(val.startsWith('margin_pct')) { sortKey='margin_pct'; sortDir=val.endsWith('desc')?-1:1; }
+  else if(val.startsWith('margin_abs')) { sortKey='margin_abs'; sortDir=-1; }
+  else if(val.startsWith('total_costs')) { sortKey='total_costs'; sortDir=-1; }
+  else if(val.startsWith('price_gross')) { sortKey='price_gross'; sortDir=val.endsWith('desc')?-1:1; }
+  else if(val.startsWith('created')) { sortKey='created'; sortDir=val.endsWith('desc')?-1:1; }
+  else if(val.startsWith('name')) { sortKey='name'; sortDir=val.endsWith('asc')?1:-1; }
+  else if(val.startsWith('category')) { sortKey='category'; sortDir=1; }
+  renderTable();
+}
+
+function applyFilters() { renderTable(); }
+
+function renderTable() {
+  const q = (document.getElementById('filter-search')?.value||'').toLowerCase();
+  const typeF = document.getElementById('filter-type')?.value||'';
+  const catF = document.getElementById('filter-category')?.value||'';
+
+  let data = products.filter(p => {
+    if(q && !p.name.toLowerCase().includes(q) && !(p.sku||'').toLowerCase().includes(q)) return false;
+    if(typeF && p.type !== typeF) return false;
+    if(catF && p.category !== catF) return false;
+    if(filterTags.size > 0 && ![...filterTags].every(ft=>(p.tags||[]).includes(ft))) return false;
+    return true;
+  });
+
+  data.sort((a,b) => {
+    const va=a[sortKey]??'', vb=b[sortKey]??'';
+    return typeof va==='string' ? sortDir*va.localeCompare(vb) : sortDir*(va-vb);
+  });
+
+  document.getElementById('prod-sub').textContent = `${products.length} Produkte gesamt · ${data.length} angezeigt`;
+  const c = document.getElementById('products-container');
+  if(!data.length){c.innerHTML='<div class="table-wrap"><div class="empty-state"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">[ ]</div><div class="empty-title">Keine Produkte gefunden</div><div class="empty-sub">Filter anpassen oder zurücksetzen.</div></div></div>';return;}
+
+  let h=`<div class="table-wrap"><table>
+    <thead><tr>
+      <th>Produkt &amp; Tags</th><th>Kategorie</th><th>Typ</th>
+      <th>VK Brutto</th><th>Kosten</th><th>Marge</th><th>Marge €</th><th></th>
+    </tr></thead><tbody>`;
+
+  data.forEach(p=>{
+    const bp=Math.max(0,Math.min(100,p.margin_pct));
+    const barCls = p.margin_pct>=30?'':p.margin_pct>=15?'mid':'low';
+    const nc=p.margin_pct>=30?'var(--green)':p.margin_pct>=15?'var(--yellow)':'var(--red)';
+    const tb=p.type==='resell'?'badge-resell':p.type==='eigen'?'badge-eigen':'badge-zubehoer';
+    const tl=p.type==='resell'?'Resell':p.type==='eigen'?'Eigen':'Zubehör';
+    const tagHtml=(p.tags||[]).map(tag=>{const s=getTagStyle(tag);return `<span class="tag-pill" style="background:${s.bg};color:${s.color};">${esc(tag)}</span>`;}).join('');
+    // Specs summary
+    const specParts = [];
+    if(p.blade_length) specParts.push(`${p.blade_length} cm`);
+    if(p.blade_material) specParts.push(p.blade_material.split(' ')[0]);
+    if(p.hardness) specParts.push(`HRC ${p.hardness}`);
+    if(p.handle_material) specParts.push(p.handle_material.split(' ')[0]);
+    if(p.weight) specParts.push(`${p.weight} g`);
+    const specHtml = specParts.length ? `<div style="font-size:10.5px;color:var(--text-tertiary);margin-top:3px;font-family:var(--mono);">${specParts.map(s=>`<span style="background:var(--bg2);padding:1px 6px;border-radius:4px;margin-right:3px;">${esc(s)}</span>`).join('')}</div>` : '';
+    h+=`<tr>
+      <td>
+        <div style="font-weight:600;">${esc(p.name)}</div>
+        ${p.sku?`<div style="font-family:var(--mono);font-size:10px;color:var(--text-tertiary);margin-top:1px;">${esc(p.sku)}</div>`:''}
+        ${specHtml}
+        ${tagHtml?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;">${tagHtml}</div>`:''}
+      </td>
+      <td style="color:var(--text-secondary);font-size:13px;">${esc(p.category)||'—'}</td>
+      <td><span class="badge ${tb}">${tl}</span></td>
+      <td class="mono">${fmt(p.price_gross)} €</td>
+      <td class="mono" style="color:var(--text-secondary);">${fmt(p.total_costs)} €</td>
+      <td><div class="mpill"><div class="mpill-track"><div class="mpill-bar ${barCls}" style="width:${bp}%"></div></div><span style="color:${nc};">${fmtP(p.margin_pct)}</span></div></td>
+      <td class="mono" style="font-weight:600;color:${nc};">${fmt(p.margin_abs)} €</td>
+      <td><button class="btn-danger" onclick="delProduct(event,${p.id})">✕</button></td>
+    </tr>`;
+  });
+  h+='</tbody></table></div>';
+  c.innerHTML=h;
+}
+
+function delProduct(e,id){
+  e.stopPropagation();
+  if(!confirm('Produkt wirklich löschen?'))return;
+  products=products.filter(p=>p.id!==id);save();
+  buildTagFilterBar(); renderTable(); toast('Produkt gelöscht');
+}
+
+// ── DASHBOARD ──
+function renderDashboard(){
+  setEl('stat-total',products.length);
+  if(!products.length){
+    ['stat-avg','stat-best','stat-worst'].forEach(id=>setEl(id,'—'));
+    ['stat-best-name','stat-worst-name'].forEach(id=>setEl(id,'—'));
+    document.getElementById('dash-recent').innerHTML='<div class="empty-state"><div class="empty-icon" style="font-size:28px;font-family:var(--mono);">[ ]</div><div class="empty-title">Noch keine Produkte</div><div class="empty-sub">Leg dein erstes Produkt an.</div></div>';
+    document.getElementById('dash-top').innerHTML='<div class="empty-state" style="padding:36px 0;"><div class="empty-icon" style="font-size:28px;">↗</div><div class="empty-sub">Noch keine Daten</div></div>';
+    return;
+  }
+  const avg=products.reduce((s,p)=>s+p.margin_pct,0)/products.length;
+  setEl('stat-avg',fmtP(avg));
+  const sorted=[...products].sort((a,b)=>b.margin_pct-a.margin_pct);
+  setEl('stat-best',fmtP(sorted[0].margin_pct)); setEl('stat-best-name',sorted[0].name);
+  setEl('stat-worst',fmtP(sorted[sorted.length-1].margin_pct)); setEl('stat-worst-name',sorted[sorted.length-1].name);
+  let h='<table style="width:100%;border-collapse:collapse;">';
+  products.slice(0,5).forEach(p=>{
+    const nc=p.margin_pct>=30?'var(--green)':p.margin_pct>=15?'var(--yellow)':'var(--red)';
+    const tagHtml=(p.tags||[]).slice(0,3).map(tag=>{const s=getTagStyle(tag);return `<span class="tag-pill" style="background:${s.bg};color:${s.color};">${esc(tag)}</span>`;}).join('');
+    h+=`<tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:11px 16px;">
+        <div style="font-size:13px;font-weight:600;">${esc(p.name)}</div>
+        ${tagHtml?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;">${tagHtml}</div>`:''}
+      </td>
+      <td style="padding:11px 16px;"><span class="badge badge-${p.type}">${p.type==='resell'?'Resell':p.type==='eigen'?'Eigen':'Zubehör'}</span></td>
+      <td style="padding:11px 16px;font-family:var(--mono);font-size:12px;color:${nc};font-weight:600;">${fmtP(p.margin_pct)}</td>
+    </tr>`;
+  });
+  h+='</table>';
+  document.getElementById('dash-recent').innerHTML=h;
+  renderBarChart('dash-top', sorted.slice(0,4));
+}
+
+// ── ANALYSE ──
+function renderAnalyse(){
+  setEl('an-total',products.length);
+  if(!products.length)return;
+  setEl('an-avg',fmtP(products.reduce((s,p)=>s+p.margin_pct,0)/products.length));
+  setEl('an-high',products.filter(p=>p.margin_pct>40).length);
+  setEl('an-low',products.filter(p=>p.margin_pct<20).length);
+  const sorted=[...products].sort((a,b)=>b.margin_pct-a.margin_pct);
+  renderBarChart('top5',sorted.slice(0,5));
+  renderBarChart('bot5',sorted.slice(-5).reverse());
+  renderBarChart('all-chart',sorted);
+
+  // Specs analysis
+  renderDistribution('an-material', products, 'blade_material', v => v.split('(')[0].trim());
+  renderDistribution('an-type', products, 'blade_type');
+  renderDistribution('an-handle', products, 'handle_material', v => v.split('(')[0].trim());
+  renderDistribution('an-target', products, 'target');
+  renderLengthDistribution('an-length');
+  renderMaterialMargin('an-material-margin');
+}
+
+function renderDistribution(id, data, field, transform) {
+  const counts = {};
+  data.forEach(p => {
+    const raw = p[field];
+    if(!raw) return;
+    const key = transform ? transform(raw) : raw;
+    counts[key] = (counts[key]||0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length) return;
+  const total = entries.reduce((s,[,c])=>s+c,0);
+  const max = entries[0][1];
+  let h = '<div class="chart-group">';
+  entries.slice(0,8).forEach(([label, count]) => {
+    const pct = (count/max)*100;
+    const share = Math.round((count/total)*100);
+    h += `<div class="chart-row">
+      <div class="chart-name" title="${esc(label)}" style="width:130px;">${esc(label)}</div>
+      <div class="chart-bg"><div class="chart-fill g" style="width:${pct}%"><span class="chart-pct">${count}×</span></div></div>
+      <div class="chart-abs" style="width:40px;">${share}%</div>
+    </div>`;
+  });
+  h += '</div>';
+  document.getElementById(id).innerHTML = h;
+}
+
+function renderLengthDistribution(id) {
+  const lengths = products.filter(p=>p.blade_length).map(p=>p.blade_length);
+  if(!lengths.length){ document.getElementById(id).innerHTML='<div class="empty-state" style="padding:24px 0;"><div class="empty-sub">Keine Längenangaben</div></div>'; return; }
+  const buckets = {'< 10 cm':0,'10–15 cm':0,'15–20 cm':0,'20–25 cm':0,'> 25 cm':0};
+  lengths.forEach(l => {
+    if(l<10) buckets['< 10 cm']++;
+    else if(l<15) buckets['10–15 cm']++;
+    else if(l<20) buckets['15–20 cm']++;
+    else if(l<25) buckets['20–25 cm']++;
+    else buckets['> 25 cm']++;
+  });
+  const avg = (lengths.reduce((s,l)=>s+l,0)/lengths.length).toFixed(1);
+  const entries = Object.entries(buckets).filter(([,c])=>c>0);
+  const max = Math.max(...entries.map(([,c])=>c));
+  let h = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:12px;font-family:var(--mono);">Ø Länge: <strong style="color:var(--accent)">${avg} cm</strong> · Min: ${Math.min(...lengths)} cm · Max: ${Math.max(...lengths)} cm</div>`;
+  h += '<div class="chart-group">';
+  entries.forEach(([label,count]) => {
+    const pct = (count/max)*100;
+    h += `<div class="chart-row">
+      <div class="chart-name" style="width:100px;">${esc(label)}</div>
+      <div class="chart-bg"><div class="chart-fill g" style="width:${pct}%"><span class="chart-pct">${count}×</span></div></div>
+    </div>`;
+  });
+  h += '</div>';
+  document.getElementById(id).innerHTML = h;
+}
+
+function renderMaterialMargin(id) {
+  const byMaterial = {};
+  products.forEach(p => {
+    if(!p.blade_material) return;
+    const key = p.blade_material.split('(')[0].trim();
+    if(!byMaterial[key]) byMaterial[key] = [];
+    byMaterial[key].push(p.margin_pct);
+  });
+  const entries = Object.entries(byMaterial)
+    .map(([mat,pcts]) => [mat, pcts.reduce((s,v)=>s+v,0)/pcts.length, pcts.length])
+    .sort((a,b)=>b[1]-a[1]);
+  if(!entries.length) { document.getElementById(id).innerHTML='<div class="empty-state" style="padding:24px 0;"><div class="empty-sub">Keine Klingenmaterial-Daten</div></div>'; return; }
+  const max = Math.max(...entries.map(([,avg])=>Math.abs(avg)),0.01);
+  let h = '<div class="chart-group">';
+  entries.forEach(([mat,avg,cnt]) => {
+    const pct = (Math.abs(avg)/max)*100;
+    const fc = avg>=30?'g':avg>=15?'y':'r';
+    h += `<div class="chart-row">
+      <div class="chart-name" title="${esc(mat)}" style="width:130px;">${esc(mat)}</div>
+      <div class="chart-bg"><div class="chart-fill ${fc}" style="width:${pct}%"><span class="chart-pct">${fmtP(avg)}</span></div></div>
+      <div class="chart-abs" style="width:40px;color:var(--text-tertiary);">${cnt}×</div>
+    </div>`;
+  });
+  h += '</div>';
+  document.getElementById(id).innerHTML = h;
+}
+
+function renderBarChart(id, list){
+  if(!list.length)return;
+  const max=Math.max(...list.map(p=>Math.abs(p.margin_pct)),0.01);
+  let h='<div class="chart-group">';
+  list.forEach(p=>{
+    const pct=(Math.abs(p.margin_pct)/max)*100;
+    const fc=p.margin_pct>=30?'g':p.margin_pct>=15?'y':'r';
+    h+=`<div class="chart-row">
+      <div class="chart-name" title="${esc(p.name)}">${esc(p.name)}</div>
+      <div class="chart-bg"><div class="chart-fill ${fc}" style="width:${pct}%"><span class="chart-pct">${fmtP(p.margin_pct)}</span></div></div>
+      <div class="chart-abs">${fmt(p.margin_abs)} €</div>
+    </div>`;
+  });
+  h+='</div>';
+  document.getElementById(id).innerHTML=h;
+}
+
+// ── HELPERS ──
+function fmt(n){return (n||0).toFixed(2).replace('.',',');}
+function fmtP(n){return (n||0).toFixed(1).replace('.',',')+' %';}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function setEl(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function save(){localStorage.setItem('km_v2',JSON.stringify(products));}
+
+function resetForm(){
+  ['f-name','f-sku','f-origin','f-desc','f-purchase','f-customs','f-logistics','f-material',
+   'f-production','f-hours','f-labor','f-import','f-transport','f-packaging','f-shipping',
+   'f-shopfee','f-marketing','f-price',
+   'f-blade-length','f-blade-width','f-blade-thickness','f-hardness','f-weight'
+  ].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['f-category','f-vat','f-blade-material','f-grind','f-handle-material','f-handle-shape',
+   'f-blade-type','f-edge-retention','f-rust','f-target','f-delivery','f-dishwasher'
+  ].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('f-vat').value='19';
+  ['mp-costs','mp-netto','mp-vat','mp-mabs','mp-mpct'].forEach(id=>setEl(id,'—'));
+  const ae=document.getElementById('mp-mabs'); if(ae) ae.className='mp-value';
+  const pe=document.getElementById('mp-mpct'); if(pe) pe.className='mp-value';
+  activeTags.clear();
+  renderTagChips();
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// Init
+renderDashboard();
+renderPresetButtons();
+</script>
+</body>
+</html>
